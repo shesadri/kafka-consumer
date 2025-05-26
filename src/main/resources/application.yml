@@ -1,0 +1,118 @@
+# Application Configuration
+spring:
+  application:
+    name: kafka-consumer
+  profiles:
+    active: default
+
+# Kafka Configuration
+kafka:
+  broker:
+    servers: ${KAFKA_BROKER_SERVERS:localhost:9092}
+    security-protocol: ${KAFKA_SECURITY_PROTOCOL:PLAINTEXT}
+    sasl-mechanism: ${KAFKA_SASL_MECHANISM:PLAIN}
+    
+  consumer:
+    group-id: ${KAFKA_CONSUMER_GROUP_ID:kafka-consumer-group}
+    auto-offset-reset: ${KAFKA_AUTO_OFFSET_RESET:earliest}
+    enable-auto-commit: ${KAFKA_ENABLE_AUTO_COMMIT:true}
+    auto-commit-interval: ${KAFKA_AUTO_COMMIT_INTERVAL:1000}
+    key-deserializer: ${KAFKA_KEY_DESERIALIZER:org.apache.kafka.common.serialization.StringDeserializer}
+    value-deserializer: ${KAFKA_VALUE_DESERIALIZER:org.apache.kafka.common.serialization.StringDeserializer}
+    max-poll-records: ${KAFKA_MAX_POLL_RECORDS:500}
+    session-timeout: ${KAFKA_SESSION_TIMEOUT:30000}
+    heartbeat-interval: ${KAFKA_HEARTBEAT_INTERVAL:3000}
+    
+  topics:
+    input-topic: ${KAFKA_INPUT_TOPIC:input-messages}
+    error-topic: ${KAFKA_ERROR_TOPIC:error-messages}
+    retry-topic: ${KAFKA_RETRY_TOPIC:retry-messages}
+    
+  retry:
+    attempts: ${KAFKA_RETRY_ATTEMPTS:3}
+    backoff-delay: ${KAFKA_RETRY_BACKOFF_DELAY:1000}
+
+# Server Configuration
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /kafka-consumer
+
+# Management and Monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,kafka
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      simple:
+        enabled: true
+
+# Logging Configuration
+logging:
+  level:
+    com.kafka.consumer: ${LOG_LEVEL_APP:INFO}
+    org.springframework.kafka: ${LOG_LEVEL_KAFKA:INFO}
+    org.apache.kafka: ${LOG_LEVEL_KAFKA_CLIENT:WARN}
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+---
+# Development Profile
+spring:
+  config:
+    activate:
+      on-profile: dev
+      
+kafka:
+  broker:
+    servers: localhost:9092
+  consumer:
+    group-id: kafka-consumer-dev-group
+    
+logging:
+  level:
+    com.kafka.consumer: DEBUG
+    org.springframework.kafka: DEBUG
+
+---
+# Test Profile
+spring:
+  config:
+    activate:
+      on-profile: test
+      
+kafka:
+  broker:
+    servers: localhost:9093
+  consumer:
+    group-id: kafka-consumer-test-group
+    auto-offset-reset: earliest
+    
+logging:
+  level:
+    com.kafka.consumer: DEBUG
+    root: WARN
+
+---
+# Production Profile
+spring:
+  config:
+    activate:
+      on-profile: prod
+      
+kafka:
+  consumer:
+    enable-auto-commit: false
+    max-poll-records: 100
+    
+logging:
+  level:
+    com.kafka.consumer: INFO
+    org.springframework.kafka: WARN
+    org.apache.kafka: ERROR
